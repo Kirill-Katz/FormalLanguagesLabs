@@ -70,9 +70,11 @@ private:
     };
 
     std::unique_ptr<RegexAST> expression();
-    std::unique_ptr<RegexAST> term();
-    std::unique_ptr<RegexAST> factor();
+    std::unique_ptr<RegexAST> concater();
+    std::unique_ptr<RegexAST> base_wrapper();
     std::unique_ptr<RegexAST> base();
+    std::unique_ptr<RegexAST> group();
+    std::unique_ptr<RegexAST> atom();
 
     bool match(RegexTokenType type) {
         if (pos_ >= tokens_.size()) return false;
@@ -87,31 +89,39 @@ private:
     size_t pos_ = 0;
 };
 
+inline std::unique_ptr<RegexAST> RegexASTBuilder::atom() {
+    LiteralNode lit;
+    lit.value = advance().lexeme.value();
+
+    return std::make_unique<RegexAST>(std::move(lit));
+}
+
+inline std::unique_ptr<RegexAST> RegexASTBuilder::group() {
+    advance();
+
+    auto node = expression();
+
+    if (!match(RegexTokenType::RParen)) {
+        throw std::runtime_error("Expected ')'");
+    }
+
+    advance();
+    return node;
+}
+
 inline std::unique_ptr<RegexAST> RegexASTBuilder::base() {
     if (match(RegexTokenType::Char) || match(RegexTokenType::Number)) {
-        LiteralNode lit;
-        lit.value = advance().lexeme.value();
-
-        return std::make_unique<RegexAST>(std::move(lit));
+        return atom();
     }
 
     if (match(RegexTokenType::LParen)) {
-        advance();
-
-        auto node = expression();
-
-        if (!match(RegexTokenType::RParen)) {
-            throw std::runtime_error("Expected ')'");
-        }
-
-        advance();
-        return node;
+        return group();
     }
 
     throw std::runtime_error("Unexpected token in base()");
 }
 
-inline std::unique_ptr<RegexAST> RegexASTBuilder::factor() {
+inline std::unique_ptr<RegexAST> RegexASTBuilder::base_wrapper() {
     auto node = base();
 
     while (!is_at_end()) {
@@ -152,13 +162,14 @@ inline std::unique_ptr<RegexAST> RegexASTBuilder::factor() {
 
 }
 
-inline std::unique_ptr<RegexAST> RegexASTBuilder::term() {
+inline std::unique_ptr<RegexAST> RegexASTBuilder::concater() {
     std::vector<std::unique_ptr<RegexAST>> nodes;
+
     while (
         !is_at_end() &&
         (match(RegexTokenType::Char) || match(RegexTokenType::LParen) || match(RegexTokenType::Number))
     ) {
-        nodes.push_back(factor());
+        nodes.push_back(base_wrapper());
     }
 
     if (nodes.empty()) {
@@ -175,11 +186,11 @@ inline std::unique_ptr<RegexAST> RegexASTBuilder::term() {
 }
 
 inline std::unique_ptr<RegexAST> RegexASTBuilder::expression() {
-    auto node = term();
+    auto node = concater();
 
     while (!is_at_end() && match(RegexTokenType::Or)) {
         advance();
-        auto right = term();
+        auto right = concater();
 
         OrNode orNode;
         orNode.left = std::move(node);
