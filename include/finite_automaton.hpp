@@ -30,7 +30,7 @@ public:
     );
 
     FiniteAutomaton(
-        const Grammar& P,
+        const Productions& P,
         char start_symbol
     );
 
@@ -39,7 +39,7 @@ public:
 
     FiniteAutomaton convert_to_dfa() const;
 
-    Grammar to_regular_grammar() const;
+    Productions to_regular_grammar() const;
     Transitions to_dfa() const;
     bool validate_string(const std::string& input) const;
 private:
@@ -82,7 +82,7 @@ inline FiniteAutomaton::FiniteAutomaton(
     }
 };
 
-inline FiniteAutomaton::FiniteAutomaton(const Grammar& P, char start_symbol) {
+inline FiniteAutomaton::FiniteAutomaton(const Productions& P, char start_symbol) {
     for (const auto& [lhs, rules] : P) {
         states_.insert(lhs);
 
@@ -253,8 +253,8 @@ inline FiniteAutomaton FiniteAutomaton::convert_to_dfa() const {
     );
 }
 
-inline Grammar FiniteAutomaton::to_regular_grammar() const {
-    Grammar grammar;
+inline Productions FiniteAutomaton::to_regular_grammar() const {
+    Productions grammar;
 
     for (const auto& [pair_key, next_states] : transitions_) {
         const auto& [state, c] = pair_key;

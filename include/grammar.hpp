@@ -4,6 +4,7 @@
 #include <vector>
 #include <random>
 #include "finite_automaton.hpp"
+#include "shared.hpp"
 
 //Variant 4:
 //VN={S, L, D},
@@ -34,7 +35,7 @@ public:
     const std::vector<char> non_terminal = { 'S', 'L', 'D' };
     const std::vector<char> terminal = { 'a', 'b', 'c','d','e','f','j'};
 
-    const Grammar P = {
+    const Productions P = {
         { "S", { "aS", "bS", "cD", "dL", "e" } },
         { "L", { "eL", "fL", "jD", "e" } },
         { "D", { "eD", "d" } }

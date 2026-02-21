@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <optional>
@@ -18,7 +19,19 @@ using LHS = std::string;
 using RHS = std::string;
 using NonTerm = std::unordered_set<char>;
 using Term = std::unordered_set<char>;
-using Grammar = std::unordered_map<LHS, std::vector<RHS>>;
+using Productions = std::unordered_map<LHS, std::vector<RHS>>;
+
+struct Grammar {
+    using Symbol = std::string;
+    using RHS = std::vector<Symbol>;
+    using LHS = Symbol;
+    using Productions = std::unordered_map<LHS, std::vector<RHS>>;
+
+    Symbol start_symbol;
+    std::set<Symbol> non_terminals;
+    std::set<Symbol> terminals;
+    Productions productions;
+};
 
 using State = std::string;
 using States = std::unordered_set<State>;

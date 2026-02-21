@@ -82,7 +82,7 @@ void solve_lab2() {
         std::move(transitions),
     };
 
-    Grammar fa_regular_grammar = fa.to_regular_grammar();
+    Productions fa_regular_grammar = fa.to_regular_grammar();
     std::cout << "Variant 4 FA: " << '\n';
     std::cout << "------------------------" << "\n";
     fa.print_fa();

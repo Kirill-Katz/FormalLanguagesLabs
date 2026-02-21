@@ -32,10 +32,10 @@
 class GrammarClassifier {
 public:
     GrammarClassifier(
-        const Grammar& grammar,
+        const Productions& production,
         const NonTerm& non_terminals,
         const Term& terminals
-    ): grammar_(grammar), non_term_(non_terminals), term_(terminals) {};
+    ): production_(production), non_term_(non_terminals), term_(terminals) {};
 
     int classify_grammar();
     inline bool check_3();
@@ -45,7 +45,7 @@ public:
 
 private:
 
-    const Grammar& grammar_;
+    const Productions& production_;
     const NonTerm& non_term_;
     const Term& term_;
 };
@@ -58,7 +58,7 @@ inline bool GrammarClassifier::check_3() {
     };
 
     Linearity lin = Linearity::unknown;
-    for (const auto& [lhs, rhses] : grammar_) {
+    for (const auto& [lhs, rhses] : production_) {
         if (lhs.size() != 1 || !non_term_.contains(lhs[0])) {
             return false;
         }
@@ -99,7 +99,7 @@ inline bool GrammarClassifier::check_3() {
 }
 
 inline bool GrammarClassifier::check_2() {
-    for (const auto& [lhs, rhses] : grammar_) {
+    for (const auto& [lhs, rhses] : production_) {
         if (lhs.size() != 1 || !non_term_.contains(lhs[0])) {
             return false;
         }
@@ -117,7 +117,7 @@ inline bool GrammarClassifier::check_2() {
 }
 
 inline bool GrammarClassifier::check_1() {
-    for (const auto& [lhs, rhses] : grammar_) {
+    for (const auto& [lhs, rhses] : production_) {
         int lhs_non_terms = 0;
         for (char c : lhs) {
             lhs_non_terms += non_term_.contains(c);

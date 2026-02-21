@@ -169,6 +169,9 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: \
  /usr/include/c++/13/bits/sstream.tcc \
  /home/alderson/Projects/Mine/labs/dsl/include/grammar_classifier.hpp \
  /home/alderson/Projects/Mine/labs/dsl/include/shared.hpp \
+ /usr/include/c++/13/set /usr/include/c++/13/bits/stl_tree.h \
+ /usr/include/c++/13/bits/stl_set.h \
+ /usr/include/c++/13/bits/stl_multiset.h \
  /usr/include/c++/13/unordered_map \
  /usr/include/c++/13/bits/unordered_map.h /usr/include/c++/13/optional \
  /usr/include/c++/13/vector /usr/include/c++/13/bits/stl_uninitialized.h \
