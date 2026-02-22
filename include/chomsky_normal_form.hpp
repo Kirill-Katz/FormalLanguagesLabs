@@ -1,9 +1,8 @@
 #pragma once
 
-#include "shared.hpp"
-#include <algorithm>
 #include <climits>
 #include <string>
+#include "cnf_grammar.hpp"
 
 // The orderings START,TERM,BIN,DEL,UNIT and START,BIN,DEL,UNIT,TERM lead to the least (i.e. quadratic) blow-up.
 

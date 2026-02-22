@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "cnf_grammar.hpp"
 #include "grammar_classifier.hpp"
 #include "finite_automaton.hpp"
 #include "grammar.hpp"
@@ -166,6 +167,15 @@ void solve_lab5() {
     Grammar normalized_grammar = chomsky_normal_form.result();
     normalized_grammar.print_grammar();
 
+    auto r = check_cnf(normalized_grammar);
+    if (!r.cnf_ok) {
+        std::cout << "CNF is not OK!" << '\n';
+    } else {
+        std::cout << "=================" << '\n';
+        std::cout << "CNF IS CORRECT" << '\n';
+        std::cout << "=================" << '\n';
+    }
+
     Grammar wiki_grammar;
     wiki_grammar.start_symbol = "S";
     wiki_grammar.non_terminals = {"A", "B", "C", "S"};
@@ -182,6 +192,15 @@ void solve_lab5() {
     chomsky_normal_form_wiki.normalize();
     Grammar normalized_wiki = chomsky_normal_form_wiki.result();
     normalized_wiki.print_grammar();
+
+    auto r2 = check_cnf(normalized_wiki);
+    if (!r.cnf_ok) {
+        std::cout << "CNF is not OK!" << '\n';
+    } else {
+        std::cout << "=================" << '\n';
+        std::cout << "CNF IS CORRECT" << '\n';
+        std::cout << "=================" << '\n';
+    }
 }
 
 void solve_lab6() {
