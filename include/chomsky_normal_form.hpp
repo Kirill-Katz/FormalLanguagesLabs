@@ -64,13 +64,9 @@ inline void ChomskyNormalForm::eliminate_inaccesible_sym() {
 
     dfs(dfs, grammar_.start_symbol);
 
-    for (auto it = grammar_.productions.begin(); it != grammar_.productions.end();) {
-        if (!visited.contains(it->first)) {
-            it = grammar_.productions.erase(it);
-        } else {
-            ++it;
-        };
-    }
+    std::erase_if(grammar_.productions, [&](const auto& p) {
+        return !visited.contains(p.first);
+    });
 
     grammar_.non_terminals = std::move(visited);
 }
@@ -131,8 +127,9 @@ inline void ChomskyNormalForm::eliminate_non_productive_sym() {
 
 inline void ChomskyNormalForm::dedup_productions() {
     for (auto& [lhs, rhses] : grammar_.productions) {
-        std::sort(rhses.begin(), rhses.end());
-        rhses.erase(std::unique(rhses.begin(), rhses.end()), rhses.end());
+        std::ranges::sort(rhses);
+        auto [first, last] = std::ranges::unique(rhses);
+        rhses.erase(first, last);
     }
 }
 
@@ -151,7 +148,6 @@ inline void ChomskyNormalForm::TERM() {
 
             for (auto& sym : rhs) {
                 if (grammar_.terminals.contains(sym)) {
-
                     if (!processed_terminals.contains(sym)) {
                         processed_terminals.insert({ sym, "N" + sym });
                     }
@@ -293,11 +289,9 @@ inline void ChomskyNormalForm::DEL() {
             continue;
         }
 
-        rhses.erase(
-            std::remove_if(rhses.begin(), rhses.end(),
-            [](const auto& rhs) { return rhs.empty(); }),
-            rhses.end()
-        );
+        std::erase_if(rhses, [](const auto& rhs) {
+            return rhs.empty();
+        });
     }
 }
 
