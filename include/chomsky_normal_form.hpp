@@ -12,10 +12,27 @@ public:
     explicit ChomskyNormalForm(Grammar g)
         : grammar_{std::move(g)} {};
 
-    void normalize();
-    const Grammar& result() const { return grammar_; }
+    void normalize() {
+        START();
+        TERM();
+        BIN();
+        DEL();
+        dedup_productions();
+        UNIT();
+        dedup_productions();
+
+        eliminate_inaccesible_sym();
+        eliminate_non_productive_sym();
+    }
+
+    Grammar result() const { return grammar_; }
 
 private:
+    void dedup_productions();
+
+    void eliminate_inaccesible_sym();
+    void eliminate_non_productive_sym();
+
     void START();
     void TERM();
     void BIN();
@@ -24,6 +41,100 @@ private:
 
     Grammar grammar_;
 };
+
+inline void ChomskyNormalForm::eliminate_inaccesible_sym() {
+    std::set<Grammar::Symbol> visited;
+
+    auto dfs = [&](
+        auto&& self,
+        const std::string& node
+    ) -> void {
+        if (!grammar_.non_terminals.contains(node)) return;
+        if (!visited.insert(node).second) return;
+
+        auto it = grammar_.productions.find(node);
+        if (it == grammar_.productions.end()) return;
+
+        for (const auto& rhs : it->second) {
+            for (const auto& sym : rhs) {
+                self(self, sym);
+            }
+        }
+    };
+
+    dfs(dfs, grammar_.start_symbol);
+
+    for (auto it = grammar_.productions.begin(); it != grammar_.productions.end();) {
+        if (!visited.contains(it->first)) {
+            it = grammar_.productions.erase(it);
+        } else {
+            ++it;
+        };
+    }
+
+    grammar_.non_terminals = std::move(visited);
+}
+
+inline void ChomskyNormalForm::eliminate_non_productive_sym() {
+    std::set<Grammar::LHS> productive;
+    std::unordered_map<std::string, std::vector<std::pair<std::string, int>>> uses;
+    std::unordered_map<std::string, std::vector<int>> need;
+
+    for (auto& [lhs, rhses] : grammar_.productions) {
+        need[lhs].resize(rhses.size(), 0);
+
+        for (size_t i = 0; i < rhses.size(); ++i) {
+            for (auto& sym : rhses[i]) {
+                if (grammar_.non_terminals.contains(sym)) {
+                    uses[sym].push_back({ lhs, i });
+                    need[lhs][i]++;
+                }
+            }
+        }
+    }
+
+    auto propagate_productiveness = [&](auto&& self, const auto& node) {
+        if (!productive.insert(node).second) {
+            return;
+        }
+        for (auto [non_term, prod_id] : uses[node]) {
+            need[non_term][prod_id]--;
+
+            if (need[non_term][prod_id] == 0) {
+                self(self, non_term);
+            }
+        }
+    };
+
+    for (auto& [lhs, rhses] : grammar_.productions) {
+        for (size_t i = 0; i < rhses.size(); ++i) {
+            if (need[lhs][i] == 0) {
+                propagate_productiveness(propagate_productiveness, lhs);
+            }
+        }
+    }
+
+    std::erase_if(grammar_.productions, [&](const auto& p) {
+        return !productive.contains(p.first);
+    });
+
+    for (auto& [lhs, rhses] : grammar_.productions) {
+        std::erase_if(rhses, [&](const auto& rhs) {
+            return std::ranges::any_of(rhs, [&](const auto& sym) {
+                return grammar_.non_terminals.contains(sym) && !productive.contains(sym);
+            });
+        });
+    }
+
+    grammar_.non_terminals = std::move(productive);
+}
+
+inline void ChomskyNormalForm::dedup_productions() {
+    for (auto& [lhs, rhses] : grammar_.productions) {
+        std::sort(rhses.begin(), rhses.end());
+        rhses.erase(std::unique(rhses.begin(), rhses.end()), rhses.end());
+    }
+}
 
 inline void ChomskyNormalForm::START() {
     grammar_.productions.insert({ "S0", { { grammar_.start_symbol } } });
@@ -92,7 +203,6 @@ inline void ChomskyNormalForm::BIN() {
 
 inline void ChomskyNormalForm::DEL() {
     std::set<Grammar::LHS> nullable;
-
     std::unordered_map<std::string, std::vector<int>> need;
     std::unordered_map<std::string, std::vector<std::pair<std::string, size_t>>> uses;
 
@@ -111,7 +221,7 @@ inline void ChomskyNormalForm::DEL() {
         }
     }
 
-    auto propagate_nullability = [&](auto self, const auto& lhs) {
+    auto propagate_nullability = [&](auto&& self, const auto& lhs) {
         if (!nullable.insert(lhs).second) {
             return;
         }
@@ -138,12 +248,12 @@ inline void ChomskyNormalForm::DEL() {
 
         for (const auto& sym : rhs) {
             if (nullable.contains(sym)) {
-                size_t answers = ans.size();
-                ans.reserve(answers * 2);
-                ans.insert(ans.end(), ans.begin(), ans.end());
+                size_t old_size = ans.size();
+                ans.resize(old_size * 2);
 
-                for (size_t i = 0; i < answers; ++i) {
+                for (size_t i = 0; i < old_size; ++i) {
                     ans[i].push_back(sym);
+                    ans[old_size + i] = ans[i];
                 }
             } else {
                 for (auto& opt : ans) {
@@ -167,11 +277,13 @@ inline void ChomskyNormalForm::DEL() {
             auto first = answer.begin() + 1;
             auto last = answer.end();
 
-            if (need[lhs][i] == 0 && lhs != grammar_.start_symbol) {
+            if (lhs != grammar_.start_symbol && !answer.empty() && answer.back().empty()) {
                 last = answer.end() - 1;
             }
 
-            rhsese.insert(rhsese.end(), first, last);
+            if (first < last) {
+                rhsese.insert(rhsese.end(), first, last);
+            }
         }
     }
 
@@ -188,3 +300,60 @@ inline void ChomskyNormalForm::DEL() {
         );
     }
 }
+
+inline void ChomskyNormalForm::UNIT() {
+    std::unordered_map<std::string, std::vector<std::string>> unit_graph;
+
+    auto is_unit_edge = [&](const auto& rhs) {
+        return rhs.size() == 1 && grammar_.non_terminals.contains(rhs[0]);
+    };
+
+    for (auto& [lhs, rhses] : grammar_.productions) {
+        for (size_t i = 0; i < rhses.size(); ++i) {
+            auto& rhs = rhses[i];
+
+            if (is_unit_edge(rhs)) {
+                unit_graph[lhs].push_back(rhs[0]);
+            }
+        }
+    }
+
+    const auto& grammar = grammar_;
+    auto dfs = [&](
+        auto&& self,
+        const std::string& node,
+        std::unordered_set<std::string>& visited,
+        std::vector<Grammar::RHS>& ans
+    ) -> void {
+        if (visited.contains(node)) return;
+        visited.insert(node);
+
+        auto pit = grammar.productions.find(node);
+        if (pit != grammar.productions.end()) {
+            for (const auto& rhs : pit->second) {
+                if (!is_unit_edge(rhs)) {
+                    ans.push_back(rhs);
+                }
+            }
+        }
+
+        auto it = unit_graph.find(node);
+        if (it != unit_graph.end()) {
+            for (auto& child : it->second) {
+                self(self, child, visited, ans);
+            }
+        }
+    };
+
+    Grammar::Productions new_productions;
+    for (const auto& [lhs, _] : grammar_.productions) {
+        std::vector<Grammar::RHS> new_rhses;
+        std::unordered_set<std::string> visited;
+        dfs(dfs, lhs, visited, new_rhses);
+        new_productions[lhs] = std::move(new_rhses);
+    }
+
+    grammar_.productions = std::move(new_productions);
+}
+
+

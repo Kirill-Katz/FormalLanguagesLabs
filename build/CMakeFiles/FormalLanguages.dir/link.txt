@@ -1,1 +1,1 @@
-/usr/lib/ccache/c++ CMakeFiles/FormalLanguages.dir/src/lexer.cpp.o CMakeFiles/FormalLanguages.dir/src/main.cpp.o -o FormalLanguages 
+/usr/lib/ccache/c++ -fsanitize=address CMakeFiles/FormalLanguages.dir/src/lexer.cpp.o CMakeFiles/FormalLanguages.dir/src/main.cpp.o -o FormalLanguages 

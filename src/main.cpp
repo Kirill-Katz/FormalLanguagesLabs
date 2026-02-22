@@ -10,6 +10,7 @@
 #include "regex_ast.hpp"
 #include "regex_ast_interpreter.hpp"
 #include "regex_lexer.hpp"
+#include "chomsky_normal_form.hpp"
 
 constexpr int n = 5;
 void solve_lab1() {
@@ -145,6 +146,28 @@ void solve_lab4() {
     }
 }
 
+void solve_lab5() {
+    Grammar grammar;
+
+    grammar.start_symbol = "S";
+    grammar.non_terminals = {"S", "A", "B", "C", "D"};
+    grammar.terminals = {"a", "b"};
+    grammar.productions = {
+        {"S", {{"a", "B"}, {"A"}}},
+        {"A", {{"B"}, {"A", "S"}, {"b", "B", "A", "B"}, {"b"}}},
+        {"B", {{"b"}, {"b", "S"}, {"a", "D"}, {}}},
+        {"D", {{"A", "A"}}},
+        {"C", {{"B", "a"}}}
+    };
+    grammar.print_grammar();
+
+    ChomskyNormalForm chomsky_normal_form(grammar);
+    chomsky_normal_form.normalize();
+    Grammar normalized_grammar = chomsky_normal_form.result();
+
+    normalized_grammar.print_grammar();
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <lab_number>\n";
@@ -172,6 +195,11 @@ int main(int argc, char* argv[]) {
         case 4:
             solve_lab4();
             break;
+
+        case 5:
+            solve_lab5();
+            break;
+
         default:
             std::cerr << "Invalid lab number\n";
             return 1;

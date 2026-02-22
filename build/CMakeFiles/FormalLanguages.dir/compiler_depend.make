@@ -212,6 +212,7 @@ CMakeFiles/FormalLanguages.dir/src/lexer.cpp.o: /home/alderson/Projects/Mine/lab
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h
 
 CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs/dsl/src/main.cpp \
+  /home/alderson/Projects/Mine/labs/dsl/include/chomsky_normal_form.hpp \
   /home/alderson/Projects/Mine/labs/dsl/include/finite_automaton.hpp \
   /home/alderson/Projects/Mine/labs/dsl/include/grammar.hpp \
   /home/alderson/Projects/Mine/labs/dsl/include/grammar_classifier.hpp \
@@ -308,11 +309,14 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
   /usr/include/c++/13/bits/stl_iterator.h \
   /usr/include/c++/13/bits/stl_iterator_base_funcs.h \
   /usr/include/c++/13/bits/stl_iterator_base_types.h \
+  /usr/include/c++/13/bits/stl_multiset.h \
   /usr/include/c++/13/bits/stl_numeric.h \
   /usr/include/c++/13/bits/stl_pair.h \
   /usr/include/c++/13/bits/stl_queue.h \
   /usr/include/c++/13/bits/stl_raw_storage_iter.h \
+  /usr/include/c++/13/bits/stl_set.h \
   /usr/include/c++/13/bits/stl_tempbuf.h \
+  /usr/include/c++/13/bits/stl_tree.h \
   /usr/include/c++/13/bits/stl_uninitialized.h \
   /usr/include/c++/13/bits/stl_vector.h \
   /usr/include/c++/13/bits/streambuf.tcc \
@@ -371,6 +375,7 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
   /usr/include/c++/13/pstl/pstl_config.h \
   /usr/include/c++/13/queue \
   /usr/include/c++/13/random \
+  /usr/include/c++/13/set \
   /usr/include/c++/13/sstream \
   /usr/include/c++/13/stdexcept \
   /usr/include/c++/13/streambuf \
@@ -607,6 +612,12 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 
 /usr/include/c++/13/memory:
 
+/usr/include/c++/13/fstream:
+
+/usr/include/c++/13/ext/concurrence.h:
+
+/usr/include/c++/13/deque:
+
 /usr/include/stdlib.h:
 
 /usr/include/pthread.h:
@@ -681,8 +692,6 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h:
 
-/usr/include/c++/13/fstream:
-
 /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h:
 
 /usr/include/c++/13/concepts:
@@ -723,6 +732,8 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 
 /usr/include/c++/13/bits/postypes.h:
 
+/usr/include/c++/13/bits/stl_multiset.h:
+
 /usr/include/c++/13/bits/vector.tcc:
 
 /usr/include/c++/13/optional:
@@ -732,8 +743,6 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 /usr/include/c++/13/bits/istream.tcc:
 
 /usr/include/c++/13/bits/stl_vector.h:
-
-/usr/include/c++/13/bits/unordered_map.h:
 
 /usr/include/c++/13/bits/new_allocator.h:
 
@@ -877,8 +886,6 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 
 /home/alderson/Projects/Mine/labs/dsl/include/lexer.hpp:
 
-/usr/include/c++/13/bits/ostream_insert.h:
-
 /usr/include/alloca.h:
 
 /usr/include/c++/13/bits/ptr_traits.h:
@@ -922,6 +929,8 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 /usr/include/c++/13/bits/stl_algo.h:
 
 /usr/include/c++/13/bits/erase_if.h:
+
+/usr/include/c++/13/set:
 
 /usr/include/c++/13/bits/shared_ptr_atomic.h:
 
@@ -968,6 +977,10 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 /usr/include/c++/13/bits/requires_hosted.h:
 
 /usr/include/x86_64-linux-gnu/bits/floatn-common.h:
+
+/usr/include/c++/13/limits:
+
+/usr/include/x86_64-linux-gnu/bits/types/wint_t.h:
 
 /usr/include/c++/13/bits/stl_queue.h:
 
@@ -1117,6 +1130,10 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 
 /usr/include/c++/13/climits:
 
+/usr/include/c++/13/bits/unordered_map.h:
+
+/home/alderson/Projects/Mine/labs/dsl/include/chomsky_normal_form.hpp:
+
 /home/alderson/Projects/Mine/labs/dsl/include/finite_automaton.hpp:
 
 /home/alderson/Projects/Mine/labs/dsl/include/grammar_classifier.hpp:
@@ -1136,8 +1153,6 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 /usr/include/x86_64-linux-gnu/bits/long-double.h:
 
 /usr/include/c++/13/bits/algorithmfwd.h:
-
-/usr/include/c++/13/bits/codecvt.h:
 
 /usr/include/c++/13/bits/fstream.tcc:
 
@@ -1159,12 +1174,12 @@ CMakeFiles/FormalLanguages.dir/src/main.cpp.o: /home/alderson/Projects/Mine/labs
 
 /usr/include/c++/13/bits/stl_heap.h:
 
+/usr/include/c++/13/bits/ostream_insert.h:
+
+/usr/include/c++/13/bits/stl_set.h:
+
+/usr/include/c++/13/bits/codecvt.h:
+
+/usr/include/c++/13/bits/stl_tree.h:
+
 /usr/include/c++/13/bits/unordered_set.h:
-
-/usr/include/c++/13/deque:
-
-/usr/include/c++/13/ext/concurrence.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/wint_t.h:
-
-/usr/include/c++/13/limits:

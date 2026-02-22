@@ -5,6 +5,8 @@
 #include <unordered_set>
 #include <optional>
 #include <vector>
+#include <iostream>
+#include <algorithm>
 
 struct state_char_pair_hash {
     template<typename T1, typename T2>
@@ -31,6 +33,66 @@ struct Grammar {
     std::set<Symbol> non_terminals;
     std::set<Symbol> terminals;
     Productions productions;
+
+    void print_grammar(std::ostream& os = std::cout) const {
+        os << "Start symbol: " << start_symbol << "\n";
+        os << "Non-terminals: {";
+        {
+            bool first = true;
+            for (const auto& nt : non_terminals) {
+                if (!first) os << ", ";
+                os << nt;
+                first = false;
+            }
+        }
+        os << "}\n";
+
+        os << "Terminals: {";
+        {
+            bool first = true;
+            for (const auto& t : terminals) {
+                if (!first) os << ", ";
+                os << t;
+                first = false;
+            }
+        }
+        os << "}\n\n";
+
+        std::vector<LHS> lhs_list;
+        lhs_list.reserve(productions.size());
+
+        for (const auto& [lhs, _] : productions) {
+            lhs_list.push_back(lhs);
+        }
+
+        std::sort(lhs_list.begin(), lhs_list.end());
+
+        for (const auto& lhs : lhs_list) {
+            const auto& rhses = productions.at(lhs);
+
+            os << lhs << " -> ";
+
+            if (rhses.empty()) {
+                os << "∅";
+            } else {
+                for (size_t i = 0; i < rhses.size(); ++i) {
+                    if (i != 0) os << " | ";
+
+                    const auto& rhs = rhses[i];
+                    if (rhs.empty()) {
+                        os << "ε";
+                    } else {
+                        for (size_t j = 0; j < rhs.size(); ++j) {
+                            if (j != 0) os << ' ';
+                            os << rhs[j];
+                        }
+                    }
+                }
+            }
+
+            os << '\n';
+        }
+    }
 };
 
 using State = std::string;
