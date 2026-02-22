@@ -168,6 +168,11 @@ void solve_lab5() {
     normalized_grammar.print_grammar();
 }
 
+void solve_lab6() {
+
+
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <lab_number>\n";
@@ -191,15 +196,15 @@ int main(int argc, char* argv[]) {
 
             solve_lab3(argv[2]);
             break;
-
         case 4:
             solve_lab4();
             break;
-
         case 5:
             solve_lab5();
             break;
-
+        case 6:
+            solve_lab6();
+            break;
         default:
             std::cerr << "Invalid lab number\n";
             return 1;
