@@ -1,1 +1,0 @@
-/usr/lib/ccache/c++ CMakeFiles/lab3.dir/lab3/src/lexer.cpp.o CMakeFiles/lab3.dir/lab3/src/main.cpp.o -o lab3 
