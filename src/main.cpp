@@ -129,7 +129,7 @@ void solve_lab4() {
     std::vector<std::string> regexes = {
         "(S|T)(U|V)W*Y+24",
         "L(U|N)O^3P*Q(2|3)",
-        "R*S(T|U|V)W(X|Y|Z)^2"
+        "R*S(T|U|V)W(X|Y|Z)^2N?"
     };
 
     for (const auto& regex : regexes) {

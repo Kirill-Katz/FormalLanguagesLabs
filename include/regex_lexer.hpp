@@ -48,6 +48,10 @@ inline std::vector<RegexToken> RegexLexer::lex() {
                 out_.push_back({ RegexTokenType::RParen, std::nullopt });
                 break;
 
+            case '?':
+                out_.push_back({ RegexTokenType::QMark, std::nullopt });
+                break;
+
             default: {
                 if (std::isdigit(c)) {
                     size_t start = i;

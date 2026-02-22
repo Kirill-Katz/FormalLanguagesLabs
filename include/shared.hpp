@@ -114,7 +114,8 @@ enum class RegexTokenType {
     Caret, // ^
     Plus,
     Number,
-    Char
+    Char,
+    QMark
 };
 
 struct RegexToken {

@@ -17,6 +17,7 @@ struct OrNode;
 struct StarNode;
 struct PlusNode;
 struct RepeatNode;
+struct QMarkNode;
 
 using RegexAST = std::variant<
     LiteralNode,
@@ -24,7 +25,8 @@ using RegexAST = std::variant<
     OrNode,
     StarNode,
     PlusNode,
-    RepeatNode
+    RepeatNode,
+    QMarkNode
 >;
 
 struct LiteralNode {
@@ -45,6 +47,10 @@ struct StarNode {
 };
 
 struct PlusNode {
+    std::unique_ptr<RegexAST> left;
+};
+
+struct QMarkNode {
     std::unique_ptr<RegexAST> left;
 };
 
@@ -153,6 +159,13 @@ inline std::unique_ptr<RegexAST> RegexASTBuilder::base_wrapper() {
             repeat.count = count;
 
             node = std::make_unique<RegexAST>(std::move(repeat));
+        } else if (match(RegexTokenType::QMark)) {
+            advance();
+
+            QMarkNode qmark;
+            qmark.left = std::move(node);
+            node = std::make_unique<RegexAST>(std::move(qmark));
+
         } else {
             break;
         }

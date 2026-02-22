@@ -68,5 +68,16 @@ inline std::string RegexASTInterpreter::generate(const RegexAST& ast) {
 
             return result;
         }
+
+        else if constexpr (std::is_same_v<T, QMarkNode>) {
+            std::string result;
+
+            std::uniform_int_distribution<> dist(0, 1);
+            if (dist(gen_) == 1) {
+                result += generate(*node.left);
+            }
+
+            return result;
+        }
     }, ast);
 }
