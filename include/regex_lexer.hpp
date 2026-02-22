@@ -8,6 +8,7 @@
 // L(U|N)O^3p*Q(2|3)
 // R*S(T|U|V)W(X|Y|Z)^2
 
+
 class RegexLexer {
 public:
     RegexLexer(const std::string src) : source_{src} {};

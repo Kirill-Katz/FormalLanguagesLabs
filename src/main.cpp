@@ -164,8 +164,24 @@ void solve_lab5() {
     ChomskyNormalForm chomsky_normal_form(grammar);
     chomsky_normal_form.normalize();
     Grammar normalized_grammar = chomsky_normal_form.result();
-
     normalized_grammar.print_grammar();
+
+    Grammar wiki_grammar;
+    wiki_grammar.start_symbol = "S";
+    wiki_grammar.non_terminals = {"A", "B", "C", "S"};
+    wiki_grammar.terminals = {"a", "b", "c"};
+
+    wiki_grammar.productions = {
+        {"S", {{"A", "b", "B"}, {"C"}}},
+        {"B", {{"A", "A"}, {"A", "C"}}},
+        {"C", {{"b"}, {"c"}}},
+        {"A", {{"a"}, {}}},
+    };
+
+    ChomskyNormalForm chomsky_normal_form_wiki(wiki_grammar);
+    chomsky_normal_form_wiki.normalize();
+    Grammar normalized_wiki = chomsky_normal_form_wiki.result();
+    normalized_wiki.print_grammar();
 }
 
 void solve_lab6() {

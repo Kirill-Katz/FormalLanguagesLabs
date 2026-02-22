@@ -20,7 +20,6 @@ public:
         dedup_productions();
         UNIT();
         dedup_productions();
-
         eliminate_inaccesible_sym();
         eliminate_non_productive_sym();
     }
@@ -33,6 +32,8 @@ private:
     void eliminate_inaccesible_sym();
     void eliminate_non_productive_sym();
 
+    std::string fresh_non_terminal(const std::string& pref);
+
     void START();
     void TERM();
     void BIN();
@@ -40,6 +41,24 @@ private:
     void UNIT();
 
     Grammar grammar_;
+};
+
+inline std::string ChomskyNormalForm::fresh_non_terminal(const std::string& prefix) {
+    if (!grammar_.non_terminals.contains(prefix) &&
+        !grammar_.terminals.contains(prefix)) {
+        grammar_.non_terminals.insert(prefix);
+        return prefix;
+    }
+
+    int id = 0;
+    while (true) {
+        std::string candidate = prefix + std::to_string(id++);
+        if (!grammar_.non_terminals.contains(candidate) &&
+            !grammar_.terminals.contains(candidate)) {
+            grammar_.non_terminals.insert(candidate);
+            return candidate;
+        }
+    }
 };
 
 inline void ChomskyNormalForm::eliminate_inaccesible_sym() {
@@ -134,9 +153,10 @@ inline void ChomskyNormalForm::dedup_productions() {
 }
 
 inline void ChomskyNormalForm::START() {
-    grammar_.productions.insert({ "S0", { { grammar_.start_symbol } } });
-    grammar_.start_symbol = "S0";
-    grammar_.non_terminals.insert("S0");
+    std::string start_sym = fresh_non_terminal("S");
+
+    grammar_.productions.insert({ start_sym, { { grammar_.start_symbol } } });
+    grammar_.start_symbol = start_sym;
 }
 
 inline void ChomskyNormalForm::TERM() {
@@ -149,7 +169,7 @@ inline void ChomskyNormalForm::TERM() {
             for (auto& sym : rhs) {
                 if (grammar_.terminals.contains(sym)) {
                     if (!processed_terminals.contains(sym)) {
-                        processed_terminals.insert({ sym, "N" + sym });
+                        processed_terminals.insert({ sym, fresh_non_terminal("N" + sym) });
                     }
 
                     sym = processed_terminals.at(sym);
@@ -160,31 +180,28 @@ inline void ChomskyNormalForm::TERM() {
 
     for (const auto& [terminal, new_nt] : processed_terminals) {
         grammar_.productions.insert({ new_nt, {{ terminal }} });
-        grammar_.non_terminals.insert(new_nt);
     }
 }
 
 inline void ChomskyNormalForm::BIN() {
-    int a = 0;
     Grammar::Productions new_productions;
 
     for (auto& [lhs, rhses] : grammar_.productions) {
         for (auto& rhs : rhses) {
             if (rhs.size() <= 2) continue;
 
-            std::string A0 = "A" + std::to_string(a++);
-            std::vector<std::string> new_rhs = { rhs[0], A0 };
+            std::string prev = fresh_non_terminal("A");
+            std::vector<std::string> new_rhs = { rhs[0], prev };
 
             for (size_t i = 1; i + 2 < rhs.size(); ++i) {
-                std::string curA = "A" + std::to_string(a - 1);
-                std::string nextA = "A" + std::to_string(a++);
+                std::string cur = prev;
+                std::string next = fresh_non_terminal("A");
 
-                new_productions[curA].push_back({ rhs[i], nextA });
+                new_productions[cur].push_back({ rhs[i], next });
+                prev = next;
             }
 
-            std::string lastA = "A" + std::to_string(a - 1);
-            new_productions[lastA].push_back({ rhs[rhs.size() - 2], rhs[rhs.size() - 1] });
-
+            new_productions[prev].push_back({ rhs[rhs.size() - 2], rhs[rhs.size() - 1] });
             rhs = std::move(new_rhs);
         }
     }
@@ -192,7 +209,6 @@ inline void ChomskyNormalForm::BIN() {
     for (auto& [non_term, rhss] : new_productions) {
         auto& dst = grammar_.productions[non_term];
         dst.insert(dst.end(), rhss.begin(), rhss.end());
-        grammar_.non_terminals.insert(non_term);
     }
 }
 
@@ -248,8 +264,8 @@ inline void ChomskyNormalForm::DEL() {
                 ans.resize(old_size * 2);
 
                 for (size_t i = 0; i < old_size; ++i) {
-                    ans[i].push_back(sym);
                     ans[old_size + i] = ans[i];
+                    ans[i].push_back(sym);
                 }
             } else {
                 for (auto& opt : ans) {

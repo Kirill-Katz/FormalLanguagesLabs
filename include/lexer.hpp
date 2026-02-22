@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <vector>
 #include <optional>
+#include <regex>
 
 enum class TokenType {
     Identifier,
@@ -25,8 +26,13 @@ struct Token {
     std::optional<std::string> lexeme;
 };
 
-class Lexer {
+struct Rule {
+    TokenType type;
+    std::regex pattern;
+    bool skip;
+};
 
+class Lexer {
 public:
     Lexer(const std::string src)
     : src_{src} {};
@@ -50,6 +56,10 @@ private:
     const std::unordered_map<std::string, TokenType> identifier_token = {
         {"return", TokenType::Return},
         {"VecF64", TokenType::Type},
+    };
+
+    const std::vector<Rule> rules = {
+
     };
 };
 
