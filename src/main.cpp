@@ -8,6 +8,7 @@
 #include "finite_automaton.hpp"
 #include "grammar.hpp"
 #include "lexer.hpp"
+#include "parser.hpp"
 #include "regex_ast.hpp"
 #include "regex_ast_interpreter.hpp"
 #include "regex_lexer.hpp"
@@ -148,21 +149,34 @@ void solve_lab4() {
 }
 
 void solve_lab5() {
-    Grammar grammar;
+    Grammar test_grammar;
+    test_grammar.start_symbol = "S";
+    test_grammar.non_terminals = {"S", "A", "B", "C", "E"};
+    test_grammar.terminals = {"a", "b"};
 
-    grammar.start_symbol = "S";
-    grammar.non_terminals = {"S", "A", "B", "C", "D"};
-    grammar.terminals = {"a", "b"};
-    grammar.productions = {
-        {"S", {{"a", "B"}, {"A"}}},
-        {"A", {{"B"}, {"A", "S"}, {"b", "B", "A", "B"}, {"b"}}},
-        {"B", {{"b"}, {"b", "S"}, {"a", "D"}, {}}},
-        {"D", {{"A", "A"}}},
-        {"C", {{"B", "a"}}}
+    test_grammar.productions = {
+        {"S", {
+            {"B"}
+        }},
+
+        {"A", {
+            {"a"}, {"a", "S"}, {"b", "A", "a", "A", "b"}
+        }},
+
+        {"B", {
+            {"A","C"}, {"b", "S"}, {"a", "A", "a"}
+        }},
+
+        {"C", {
+            {}, {"A", "B"}
+        }},
+
+        {"E", {
+            { "B", "A" }
+        }}
     };
-    grammar.print_grammar();
 
-    ChomskyNormalForm chomsky_normal_form(grammar);
+    ChomskyNormalForm chomsky_normal_form(test_grammar);
     chomsky_normal_form.normalize();
     Grammar normalized_grammar = chomsky_normal_form.result();
     normalized_grammar.print_grammar();
@@ -176,36 +190,83 @@ void solve_lab5() {
         std::cout << "=================" << '\n';
     }
 
-    Grammar wiki_grammar;
-    wiki_grammar.start_symbol = "S";
-    wiki_grammar.non_terminals = {"A", "B", "C", "S"};
-    wiki_grammar.terminals = {"a", "b", "c"};
+    //Grammar grammar;
+    //grammar.start_symbol = "S";
+    //grammar.non_terminals = {"S", "A", "B", "C", "D"};
+    //grammar.terminals = {"a", "b"};
+    //grammar.productions = {
+    //    {"S", {{"a", "B"}, {"A"}}},
+    //    {"A", {{"B"}, {"A", "S"}, {"b", "B", "A", "B"}, {"b"}}},
+    //    {"B", {{"b"}, {"b", "S"}, {"a", "D"}, {}}},
+    //    {"D", {{"A", "A"}}},
+    //    {"C", {{"B", "a"}}}
+    //};
+    //grammar.print_grammar();
 
-    wiki_grammar.productions = {
-        {"S", {{"A", "b", "B"}, {"C"}}},
-        {"B", {{"A", "A"}, {"A", "C"}}},
-        {"C", {{"b"}, {"c"}}},
-        {"A", {{"a"}, {}}},
-    };
+    //ChomskyNormalForm chomsky_normal_form(grammar);
+    //chomsky_normal_form.normalize();
+    //Grammar normalized_grammar = chomsky_normal_form.result();
+    //normalized_grammar.print_grammar();
 
-    ChomskyNormalForm chomsky_normal_form_wiki(wiki_grammar);
-    chomsky_normal_form_wiki.normalize();
-    Grammar normalized_wiki = chomsky_normal_form_wiki.result();
-    normalized_wiki.print_grammar();
+    //auto r = check_cnf(normalized_grammar);
+    //if (!r.cnf_ok) {
+    //    std::cout << "CNF is not OK!" << '\n';
+    //} else {
+    //    std::cout << "=================" << '\n';
+    //    std::cout << "CNF IS CORRECT" << '\n';
+    //    std::cout << "=================" << '\n';
+    //}
 
-    auto r2 = check_cnf(normalized_wiki);
-    if (!r.cnf_ok) {
-        std::cout << "CNF is not OK!" << '\n';
-    } else {
-        std::cout << "=================" << '\n';
-        std::cout << "CNF IS CORRECT" << '\n';
-        std::cout << "=================" << '\n';
-    }
+    //Grammar wiki_grammar;
+    //wiki_grammar.start_symbol = "S";
+    //wiki_grammar.non_terminals = {"A", "B", "C", "S"};
+    //wiki_grammar.terminals = {"a", "b", "c"};
+
+    //wiki_grammar.productions = {
+    //    {"S", {{"A", "b", "B"}, {"C"}}},
+    //    {"B", {{"A", "A"}, {"A", "C"}}},
+    //    {"C", {{"b"}, {"c"}}},
+    //    {"A", {{"a"}, {}}},
+    //};
+
+    //ChomskyNormalForm chomsky_normal_form_wiki(wiki_grammar);
+    //chomsky_normal_form_wiki.normalize();
+    //Grammar normalized_wiki = chomsky_normal_form_wiki.result();
+    //normalized_wiki.print_grammar();
+
+    //auto r2 = check_cnf(normalized_wiki);
+    //if (!r.cnf_ok) {
+    //    std::cout << "CNF is not OK!" << '\n';
+    //} else {
+    //    std::cout << "=================" << '\n';
+    //    std::cout << "CNF IS CORRECT" << '\n';
+    //    std::cout << "=================" << '\n';
+    //}
 }
 
-void solve_lab6() {
+void solve_lab6(const std::string& path) {
+    std::ifstream file(path);
+    if (!file) {
+        std::cerr << "Could not open file: " << path << "\n";
+        return;
+    }
 
+    std::stringstream buffer;
+    buffer << file.rdbuf();
 
+    Lexer lexer(buffer.str());
+    auto tokens = lexer.lex();
+
+    std::cout << "Tokens:\n";
+    std::cout << "------------------------\n";
+    lexer.debug_log(tokens);
+
+    Parser parser(tokens);
+    auto ast = parser.parse();
+
+    std::cout << "\nAST:\n";
+    std::cout << "------------------------\n";
+    ast->print(std::cout, 0);
 }
 
 int main(int argc, char* argv[]) {
@@ -238,7 +299,7 @@ int main(int argc, char* argv[]) {
             solve_lab5();
             break;
         case 6:
-            solve_lab6();
+            solve_lab6(argc >= 3 ? argv[2] : "example.dsl");
             break;
         default:
             std::cerr << "Invalid lab number\n";
