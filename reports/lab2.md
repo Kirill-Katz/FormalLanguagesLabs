@@ -1,79 +1,40 @@
-# DETERMINISM IN FINITE AUTOMATA. NDFA → DFA. CHOMSKY HIERARCHY  
+# DETERMINISM IN FINITE AUTOMATA. NDFA -> DFA. CHOMSKY HIERARCHY
 ## VARIANT 4
 
-Course: Formal Languages & Finite Automata  
-Author: Chiril Caț  
+Course: Formal Languages & Finite Automata
+Author: Chiril Caț
 
 ---
 
 ## INTRODUCTION
 
-This laboratory work extends the previous implementation by focusing on:
+This laboratory work extends the implementation from the previous task by studying grammar classification, determinism in finite automata, and the conversion processes between automata and grammars. The objective is to connect these topics inside the same codebase rather than treat them as isolated theory.
 
-- Grammar classification based on the Chomsky hierarchy;
-- Determinism in finite automata;
-- Conversion of a finite automaton to a regular grammar;
-- Conversion of an NDFA to a DFA using subset construction.
-
-The work continues in the same repository and builds on the previously implemented grammar and automaton structures, as required in the task :contentReference[oaicite:0]{index=0}.
+The work continues in the same repository and reuses the structures developed earlier. This makes the task cumulative in a useful way, because the project evolves from a simple generator and recognizer into a broader toolkit for formal language analysis.
 
 ---
 
 ## THEORY
 
-### Chomsky Hierarchy
+The Chomsky hierarchy classifies grammars into four major categories: Type 0, Type 1, Type 2, and Type 3. A grammar is regular, or Type 3, when its productions follow a restricted linear form such as `A -> aB` or `A -> a`. Because of that restriction, regular grammars correspond directly to finite automata.
 
-Grammars are classified into four types:
+A finite automaton is deterministic when each state has at most one outgoing transition for a given symbol. If the same state and input symbol may lead to multiple next states, then the automaton is non-deterministic. Even in that case, the language recognized by the NDFA can still be recognized by an equivalent DFA obtained through subset construction.
 
-- Type 3 — Regular grammars  
-- Type 2 — Context-free grammars  
-- Type 1 — Context-sensitive grammars  
-- Type 0 — Unrestricted grammars  
-
-A grammar is **Type 3 (regular)** if productions are of the form:
-
-- A → aB  
-- A → a  
-
-and the linearity (left or right) is consistent.
+Another important equivalence is the conversion from automata back to regular grammars. If each transition is turned into a production, the behavior of the automaton can be described again in grammar form. This duality is one of the central ideas verified in this laboratory.
 
 ---
 
-### Deterministic vs Non-Deterministic Finite Automata
+## GRAMMAR CLASSIFICATION
 
-A finite automaton is deterministic (DFA) if:
+The grammar reused from Lab 1 is:
 
-- For each state and each symbol in the alphabet,
-- There is at most one transition.
-
-If a transition leads to multiple states for the same symbol, the automaton is non-deterministic (NDFA).
-
-Every NDFA can be converted into an equivalent DFA using **subset construction**.
-
----
-
-## PART I — GRAMMAR CLASSIFICATION
-
-The grammar from Lab 1 is reused:
-
-```
-S → aS | bS | cD | dL | e  
-L → eL | fL | jD | e  
-D → eD | d  
+```text
+S -> aS | bS | cD | dL | e
+L -> eL | fL | jD | e
+D -> eD | d
 ```
 
-To classify the grammar, a `GrammarClassifier` class was implemented.
-
-### Classification Strategy
-
-The classification checks grammar properties in descending order:
-
-1. Check Type 3 (regular)
-2. Check Type 2 (context-free)
-3. Check Type 1 (context-sensitive)
-4. Otherwise → Type 0
-
-Core method:
+To classify the grammar, the project introduces a `GrammarClassifier` class. The classification checks the strongest form first and then proceeds downward through the hierarchy:
 
 ```cpp
 int GrammarClassifier::classify_grammar() {
@@ -84,35 +45,15 @@ int GrammarClassifier::classify_grammar() {
 }
 ```
 
-The `check_3()` function verifies:
-
-- Left-hand side contains exactly one non-terminal;
-- Right-hand side length ≤ 2;
-- Form is consistently left-linear or right-linear.
-
-Result:
-
-```
-Lab 1 grammar is of type 3
-```
-
-Therefore, the grammar is **regular (Type 3)**.
+The regularity check verifies that the left-hand side always contains exactly one non-terminal, that the right-hand side has the correct restricted length, and that the grammar maintains a consistent linear direction. For the grammar above, the result is Type 3, which confirms that the grammar is regular.
 
 ---
 
-## PART II — FINITE AUTOMATON ANALYSIS (VARIANT 4)
+## FINITE AUTOMATON ANALYSIS
 
-Given automaton:
+The automaton for variant 4 has the state set `Q = {q0, q1, q2, q3}`, alphabet `Σ = {a, b}`, and final state set `F = {q3}`. Its transitions include:
 
-```
-Q = {q0,q1,q2,q3}
-Σ = {a,b}
-F = {q3}
-```
-
-Transitions:
-
-```
+```text
 δ(q0,a) = q1
 δ(q0,a) = q2
 δ(q1,b) = q1
@@ -121,16 +62,14 @@ Transitions:
 δ(q2,b) = q3
 ```
 
-Implementation snippet:
+The critical detail is that `δ(q0, a)` leads to two different states. In the implementation, that appears directly as:
 
 ```cpp
 transitions[{ "q0", 'a' }].insert("q1");
 transitions[{ "q0", 'a' }].insert("q2");
 ```
 
-Since δ(q0, a) leads to two states, the automaton is **non-deterministic**.
-
-Determinism check:
+Because the same state-symbol pair has more than one target, the automaton is non-deterministic. The project checks this property with:
 
 ```cpp
 bool FiniteAutomaton::is_deterministic() const {
@@ -142,47 +81,27 @@ bool FiniteAutomaton::is_deterministic() const {
 }
 ```
 
-Result:
-
-```
-Variant 4 FA is NOT deterministic
-```
+When executed on the given automaton, the program reports that the variant 4 automaton is not deterministic.
 
 ---
 
-## PART III — CONVERSION FA → REGULAR GRAMMAR
+## CONVERSION FROM AUTOMATON TO REGULAR GRAMMAR
 
-Each transition:
+The next step transforms the finite automaton into a regular grammar. Each transition `δ(qi, a) = qj` becomes a production of the form `Ai -> aAj`. If the destination state is final, then a terminal-only production is also introduced.
 
-```
-δ(qi, a) = qj
-```
-
-becomes production:
-
-```
-A_i → aA_j
-```
-
-If `qj` is final, then:
-
-```
-A_i → a
-```
-
-Snippet:
+The core of that logic is:
 
 ```cpp
 grammar[state_nt].push_back(std::string(1, c) + next_state_nt);
 
 if (final_states_.contains(next_state)) {
-    grammar[state_nt].push_back(std::string(1,c));
+    grammar[state_nt].push_back(std::string(1, c));
 }
 ```
 
-Resulting grammar:
+For the given automaton, the resulting grammar includes productions such as:
 
-```
+```text
 B -> aC
 B -> bB
 A -> aC
@@ -192,19 +111,15 @@ C -> b
 C -> aB
 ```
 
-This confirms the equivalence between finite automata and regular grammars.
+This confirms that the language recognized by the automaton can be expressed again as a regular grammar.
 
 ---
 
-## PART IV — NDFA → DFA CONVERSION
+## NDFA TO DFA CONVERSION
 
-The conversion uses **subset construction**:
+The final part of the laboratory applies subset construction in order to obtain a deterministic automaton. Each DFA state represents a set of original NDFA states. The process starts from the initial subset containing `q0` and explores all reachable subsets using breadth-first search.
 
-- Each DFA state represents a set of NDFA states.
-- Start state = {q0}.
-- BFS is used to explore reachable subsets.
-
-Core logic:
+The initialization of the algorithm is:
 
 ```cpp
 States start = { initial_state_ };
@@ -212,7 +127,7 @@ bfs.push(start);
 visited.insert(encode(start));
 ```
 
-For each symbol:
+For each symbol, the algorithm computes the union of all next states reachable from the current subset:
 
 ```cpp
 for (char a : alphabet_) {
@@ -221,96 +136,32 @@ for (char a : alphabet_) {
 }
 ```
 
-Resulting DFA:
+The resulting DFA contains states such as `q1|q2` and `q1|q3`, which encode subsets of the original NDFA states. A representative form of the final automaton is:
 
-```
+```text
 Q = {q0,q1,q1|q2,q1|q3,q2,q3}
 Σ = {a,b}
 F = {q1|q3,q3}
 ```
 
-Transitions:
-
-```
-δ(q0,a) = q1|q2
-δ(q1,a) = q2
-δ(q1,b) = q1
-δ(q1|q2,a) = q1|q2
-δ(q1|q2,b) = q1|q3
-...
-```
-
-Now every transition leads to exactly one state — the automaton is deterministic.
+After this transformation, every state-symbol pair has exactly one destination, which means the automaton is deterministic.
 
 ---
 
 ## RESULTS
 
-Program output:
-
-```
-Lab 1 grammar is of type 3
-------------------------
-
-Variant 4 FA: 
-------------------------
-Q = {q0,q1,q2,q3},
-Σ = {a,b},
-F = {q3},
-δ(q0,a) = q1,
-δ(q0,a) = q2,
-δ(q1,a) = q2,
-δ(q1,b) = q1,
-δ(q2,a) = q1,
-δ(q2,b) = q3,
-
-
-Variant 4 FA is NOT deterministic
-------------------------
-
-Regular grammar from variant 4 FA: 
-------------------------
-B -> aC
-B -> bB
-A -> aC
-A -> aB
-C -> bF1
-C -> b
-C -> aB
-
-
-NDFA to DFA conversion for variant 4: 
-------------------------
-Q = {q0,q1,q1|q2,q1|q3,q2,q3},
-Σ = {a,b},
-F = {q1|q3,q3},
-δ(q0,a) = q1|q2,
-δ(q1,a) = q2,
-δ(q1,b) = q1,
-δ(q1|q2,a) = q1|q2,
-δ(q1|q2,b) = q1|q3,
-δ(q1|q3,a) = q2,
-δ(q1|q3,b) = q1,
-δ(q2,a) = q1,
-δ(q2,b) = q3,
-```
-
-All required tasks from the laboratory were completed:
-
-- Grammar classification;
-- FA → regular grammar conversion;
-- Determinism detection;
-- NDFA → DFA conversion.
+The execution confirms all required goals of the laboratory. The grammar from Lab 1 is classified as Type 3, the variant 4 automaton is recognized as non-deterministic, the automaton is converted into a regular grammar, and the subset construction produces a valid DFA. The project therefore demonstrates the theoretical relationships through actual program behavior rather than only through definitions.
 
 ---
 
 ## CONCLUSION
 
-This laboratory demonstrates:
+This laboratory work extends the previous implementation into a more complete framework for grammar and automaton analysis. It classifies a grammar inside the Chomsky hierarchy, identifies non-determinism in a finite automaton, converts the automaton into an equivalent regular grammar, and determinizes the NDFA through subset construction. The result is both technically correct and reusable for later experiments with formal language models.
 
-- Formal classification of grammars using Chomsky hierarchy;
-- Identification of non-determinism in finite automata;
-- Equivalence between regular grammars and finite automata;
-- Subset construction algorithm for determinization.
+---
 
-The implementation is generic and reusable for other grammars and automata, not limited to the specific variant.
+## REFERENCES
+
+[1] https://en.wikipedia.org/wiki/Chomsky_hierarchy
+[2] https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton
+[3] https://en.wikipedia.org/wiki/Powerset_construction

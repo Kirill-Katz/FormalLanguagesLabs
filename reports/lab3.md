@@ -1,69 +1,32 @@
-# LEXER & SCANNER  
+# LEXER & SCANNER
 ## LAB 3
 
-Course: Formal Languages & Finite Automata  
-Author: Chiril Caț  
+Course: Formal Languages & Finite Automata
+Author: Chiril Caț
 
 ---
 
 ## INTRODUCTION
 
-This laboratory work focuses on **lexical analysis**, one of the first stages in the implementation of a compiler or interpreter.
+This laboratory work focuses on lexical analysis, one of the first major stages in the implementation of a compiler or interpreter. The goal is to read a source file, identify the meaningful elements that appear inside it, and convert those elements into a structured token stream that can be used by later stages of the project.
 
-The objective is to:
-
-- Understand how a lexer/tokenizer works;
-- Design token categories for a small domain-specific language;
-- Implement a working lexer in C++;
-- Demonstrate token extraction on a non-trivial input file.
-
-The implementation follows the requirements described in the laboratory task.
+Instead of choosing a very small arithmetic example, the implementation uses a compact DSL-like input language with declarations, assignments, function calls, numbers, string literals, and a final return statement. This makes the scanner more realistic while still keeping the scope manageable for a laboratory exercise.
 
 ---
 
 ## THEORY
 
-### Lexical Analysis
+Lexical analysis is the process of converting raw source text into a sequence of tokens. A token is not simply the text fragment itself, but the category assigned to that fragment according to the language rules. In the input `return res`, the lexemes are the substrings `"return"` and `"res"`, while the token categories are `Return` and `Identifier`.
 
-Lexical analysis is the process of converting a sequence of characters into a sequence of tokens.
-
-- A **lexeme** is the raw substring extracted from the source.
-- A **token** is a categorized representation of that lexeme.
-
-Example:
-
-```
-return res
-```
-
-Lexemes:
-```
-"return", "res"
-```
-
-Tokens:
-```
-Return, Identifier
-```
-
-The lexer does not evaluate expressions or understand grammar structure - it only categorizes input symbols.
+The lexer does not try to understand the full structure of the program. It does not check whether an expression is valid or whether a statement has the correct form. Its task is limited to reading characters, grouping them into lexemes, and assigning a token type to each recognized unit.
 
 ---
 
-## DESIGN
+## INPUT LANGUAGE
 
-Instead of implementing a simple calculator, a small DSL-like structure was used.  
-The input file supports:
+The scanner targets the DSL used in the repository. The sample input contains typed declarations, assignments, function calls, floating-point values, string literals, and a final return statement:
 
-- Variable declarations with types
-- Function calls
-- String literals
-- Integers and floats
-- Return statement
-
-Example input:
-
-```
+```text
 A: VecF64
 B: VecF64
 C: VecF64
@@ -82,11 +45,13 @@ res = SumVals(temp, c)
 return res
 ```
 
+This example is rich enough to exercise several token categories without introducing unnecessary grammar complexity at the lexical stage.
+
 ---
 
-## TOKEN TYPES
+## TOKEN MODEL
 
-The following token types were defined:
+The token types defined in the project are:
 
 ```cpp
 enum class TokenType {
@@ -106,22 +71,13 @@ enum class TokenType {
 };
 ```
 
-This allows classification of:
-
-- Identifiers
-- Keywords (`return`)
-- Types (`VecF64`)
-- Numbers (int / float)
-- String literals
-- Structural symbols
+These categories allow the lexer to distinguish identifiers, punctuation, numeric literals, strings, keywords, and type names. The separation between `Integer` and `Float` is especially useful because later compiler stages often need to preserve that difference rather than treating all numeric values the same way.
 
 ---
 
 ## LEXER STRUCTURE
 
-The `Lexer` class operates on a source string and produces a vector of tokens.
-
-Core interface:
+The scanner is implemented in a `Lexer` class that receives the full source text and produces a vector of tokens:
 
 ```cpp
 class Lexer {
@@ -132,36 +88,19 @@ public:
 };
 ```
 
+The `lex()` method performs the tokenization, while `debug_log()` prints the resulting token sequence for inspection. Internally, the lexer processes the input from left to right using an index pointer and dispatches to dedicated scanning routines depending on the current character.
+
 ---
 
-## TOKENIZATION LOGIC
+## TOKENIZATION PROCESS
 
-The lexer processes the input sequentially using an index pointer.
-
-### 1. Single-character tokens
-
-Recognized via helper function:
+Single-character tokens such as parentheses, commas, colons, and the assignment operator are recognized directly through a helper function:
 
 ```cpp
 static const std::optional<TokenType> single_char_token(char c);
 ```
 
-Handles:
-```
-( ) , = :
-```
-
----
-
-### 2. Identifiers & Keywords
-
-Identifiers begin with a letter or underscore and continue with alphanumeric characters.
-
-```cpp
-void Lexer::scan_identifier();
-```
-
-After reading the lexeme, it is checked against a keyword map:
+Identifiers begin with a letter or underscore and continue with alphanumeric characters. After the full lexeme is scanned, it is checked against a keyword map so that reserved words and known types can be distinguished from ordinary identifiers:
 
 ```cpp
 const std::unordered_map<std::string, TokenType> identifier_token = {
@@ -170,71 +109,19 @@ const std::unordered_map<std::string, TokenType> identifier_token = {
 };
 ```
 
-This allows differentiation between:
+This makes it possible to separate `Identifier("res")`, `Return("return")`, and `Type("VecF64")`, even though all of them are scanned through the same identifier routine.
 
-```
-Identifier("res")
-Return("return")
-Type("VecF64")
-```
+Numbers are handled by `scan_number()`. If the lexeme contains no decimal point, the token is classified as `Integer`. If it does contain a decimal point, the token becomes `Float`. Invalid number forms cause runtime errors instead of being accepted silently.
 
----
+String literals are scanned by `scan_string_literal()`. The lexer verifies that the closing quote exists and that a newline does not appear before the string is terminated. This is enough for the DSL used in the report, where strings are mainly needed for file-path arguments such as `./some_csv.csv`.
 
-### 3. Numbers (Integer & Float)
-
-Numbers are parsed as:
-
-- Integer if no decimal point
-- Float if decimal point exists
-
-```cpp
-void Lexer::scan_number();
-```
-
-Malformed floats trigger runtime errors.
-
-Example recognized tokens:
-
-```
-Float('3.3')
-Float('4.5')
-Integer('42')
-```
-
----
-
-### 4. String Literals
-
-Strings are enclosed in double quotes.
-
-```cpp
-void Lexer::scan_string_literal();
-```
-
-The lexer ensures:
-
-- No newline inside a string
-- Proper termination with closing quote
-
-Example:
-
-```
-StringLiteral('./some_csv.csv')
-```
-
----
-
-### 5. Newlines & Whitespace
-
-- Newlines are preserved as tokens.
-- Other whitespace is ignored.
-- End-of-file produces an `End` token.
+Whitespace is treated selectively. Ordinary spaces are ignored, but line breaks are preserved as `NewLine` tokens because the source format is line-oriented. At the end of the input, the lexer appends an `End` token to mark the termination of the stream.
 
 ---
 
 ## EXECUTION
 
-The lab function:
+The laboratory driver reads the source file into memory, creates a `Lexer` instance, runs tokenization, and prints the resulting tokens:
 
 ```cpp
 void solve_lab3(const std::string& path) {
@@ -248,79 +135,31 @@ void solve_lab3(const std::string& path) {
 }
 ```
 
+This setup is intentionally simple and makes the lexical stage easy to test during evaluation.
+
 ---
 
-## OUTPUT
+## RESULT
 
-For the provided sample file, the lexer produces:
+For the provided sample file, the lexer produces a token stream that begins with entries such as `Identifier('A')`, `Colon`, `Type('VecF64')`, and `NewLine`, and ends with `Return('return')`, `Identifier('res')`, `NewLine`, and `End`. The output shows that declarations, assignments, function calls, floating-point values, string literals, and the final return statement are all recognized correctly.
 
-```
-Identifier('A')
-Colon
-Type('VecF64')
-NewLine
-Identifier('B')
-Colon
-Type('VecF64')
-NewLine
-Identifier('C')
-Colon
-Type('VecF64')
-NewLine
-NewLine
-Identifier('input')
-Colon
-Type('VecF64')
-Equals
-Identifier('loadCSV')
-LParen
-StringLiteral('./some_csv.csv')
-RParen
-NewLine
-...
-Return('return')
-Identifier('res')
-NewLine
-End
-```
-
-All constructs are correctly tokenized:
-
-- Declarations
-- Assignments
-- Function calls
-- Floats
-- String literals
-- Return statement
+The produced token stream is no longer just raw text. It is already structured enough to serve as the input for the parser introduced in the next laboratory work.
 
 ---
 
 ## ERROR HANDLING
 
-The lexer throws runtime errors in case of:
-
-- Unexpected characters
-- Unterminated string literals
-- Malformed floating point numbers
-
-This prevents silent failure and ensures correctness of tokenization.
+The implementation throws runtime errors when it encounters unexpected characters, unterminated string literals, or malformed floating-point numbers. This behavior is important because it prevents silent failure and makes the lexer reliable as a front-end component. A scanner that reports problems immediately is much easier to test and extend than one that accepts invalid input without complaint.
 
 ---
 
 ## CONCLUSION
 
-This laboratory demonstrates:
+This laboratory work demonstrates the practical implementation of lexical analysis for a small DSL. The lexer identifies token categories for identifiers, keywords, numbers, strings, and structural symbols, preserves line boundaries where needed, and produces a clean token stream suitable for later syntactic analysis. As a result, the project now has a solid lexical foundation for parsing and Abstract Syntax Tree construction.
 
-- Practical implementation of lexical analysis;
-- Differentiation between lexemes and tokens;
-- Handling of identifiers, keywords, numbers, and strings;
-- Proper token stream generation for a small DSL-like language.
+---
 
-The lexer is structured in a modular way and can be extended with:
+## REFERENCES
 
-- Additional keywords
-- Operators
-- Comments
-- More complex token rules
-
-This implementation provides a solid base for further compiler/interpreter stages such as parsing and AST construction.
+[1] https://en.wikipedia.org/wiki/Lexical_analysis
+[2] https://en.wikipedia.org/wiki/Lexer

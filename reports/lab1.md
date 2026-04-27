@@ -1,104 +1,52 @@
-# REGULAR GRAMMAR AND FINITE AUTOMATON  
+# REGULAR GRAMMAR AND FINITE AUTOMATON
 ## VARIANT 4
 
-Course: Formal Languages & Finite Automata  
+Course: Formal Languages & Finite Automata
 Author: Chiril Caț
 
 ---
 
 ## INTRODUCTION
 
-This laboratory work presents the implementation of a **regular grammar** and its transformation into a **finite automaton**.
+This laboratory work presents the implementation of a regular grammar together with its equivalent finite automaton. The purpose of the task is to show, in a concrete program, how a grammar can generate strings from a language and how the same language can be recognized by an automaton.
 
-The objective is to:
-
-- Implement a grammar structure;
-- Generate valid strings from the grammar;
-- Convert the grammar into a finite automaton;
-- Validate strings using the automaton.
-
-This demonstrates the theoretical equivalence between **regular grammars (Type 3)** and **finite automata**.
+The work covers the complete path from representation to validation. The grammar is modeled explicitly in code, used to generate valid strings, transformed into a finite automaton, and then used again in automaton form to validate whether a given string belongs to the language. In this way, the laboratory demonstrates the practical equivalence between regular grammars and finite automata.
 
 ---
 
 ## THEORY
 
-A formal language is defined as a set of strings over a finite alphabet.
+A formal language is a set of strings defined over a finite alphabet. In the case of regular languages, that set can be described either by a regular grammar or by a finite automaton. A regular grammar uses restricted productions such as `A -> aB` or `A -> a`, where the right-hand side contains at most one non-terminal. Because of this restricted form, such grammars can be mapped directly to automata.
 
-A regular grammar has production rules of the form:
-
-- **A → aB**
-- **A → a**
-
-Each non-terminal corresponds to a state in a finite automaton.
-
-A finite automaton is defined as:
-
-- **Q** – set of states  
-- **Σ** – alphabet  
-- **δ** – transition function  
-- **q₀** – initial state  
-- **F** – set of final states  
-
-There exists a one-to-one correspondence between right-linear grammars and finite automata.
+A finite automaton describes the same language through states and transitions. Each non-terminal from the grammar corresponds naturally to a state, and each production becomes one or more transitions. A rule such as `A -> aB` becomes a transition from state `A` to state `B` on symbol `a`, while a rule such as `A -> a` becomes a transition to a final state. This one-to-one correspondence is the theoretical basis of the implementation.
 
 ---
 
-## GRAMMAR DEFINITION
+## GRAMMAR MODEL
 
-Non-terminals:  
-VN = { S, L, D }
+The grammar used in this laboratory has the non-terminals `S`, `L`, and `D`, the terminal alphabet `{a, b, c, d, e, f, j}`, and the following production rules:
 
-Terminals:  
-VT = { a, b, c, d, e, f, j }
+```text
+S -> aS | bS | cD | dL | e
+L -> eL | fL | jD | e
+D -> eD | d
+```
 
-Start symbol:  
-S
-
-Productions:
-
-S → aS  
-S → bS  
-S → cD  
-S → dL  
-S → e  
-
-L → eL  
-L → fL  
-L → jD  
-L → e  
-
-D → eD  
-D → d  
-
-This is a **right-linear grammar**, therefore it is regular.
+This grammar is right-linear because any non-terminal that appears on the right-hand side appears at the end of the production. For that reason, it is a regular grammar and can be transformed directly into a finite automaton.
 
 ---
 
 ## IMPLEMENTATION
 
-The project is implemented in **C++**.
+The project is implemented in C++ and is centered around two classes named `GrammarGenerator` and `FiniteAutomaton`. The grammar class stores the non-terminals, terminals, and production rules, while the automaton class stores the states, alphabet, transitions, initial state, and final states.
 
-Two main classes are used:
-
-- `GrammarGenerator`
-- `FiniteAutomaton`
-
----
-
-### GrammarGenerator Class
-
-The class stores:
-
-- Non-terminals
-- Terminals
-- Production rules
+The structure of the grammar object is shown below:
 
 ```cpp
 class GrammarGenerator {
 public:
     const std::vector<char> non_terminal = { 'S', 'L', 'D' };
-    const std::vector<char> terminal = { 'a', 'b', 'c','d','e','f','j'};
+    const std::vector<char> terminal = { 'a', 'b', 'c', 'd', 'e', 'f', 'j' };
 
     const Productions P = {
         { "S", { "aS", "bS", "cD", "dL", "e" } },
@@ -111,74 +59,27 @@ public:
 };
 ```
 
-### String Generation
+The `generate_string()` method starts from the symbol `S` and repeatedly expands the current non-terminal until only terminal characters remain. Because the production choice is performed dynamically, the method can generate multiple valid strings from the same language.
 
-The `generate_string()` method:
-
-1. Starts from the start symbol `S`;
-2. Randomly selects one production rule;
-3. Replaces non-terminals until only terminals remain;
-4. Returns a valid string from the language.
-
----
-
-### Conversion to Finite Automaton
-
-The conversion follows the theoretical mapping:
-
-- Each non-terminal → state
-- Each production `A → aB` → transition δ(A, a) = B
-- Each production `A → a` → transition δ(A, a) = F (final state)
-
-Constructor used:
+The conversion to finite automaton follows the standard theoretical mapping. Every non-terminal becomes a state, every production of the form `A -> aB` becomes a transition, and every production of the form `A -> a` leads to a special final state. That logic is encapsulated by the constructor:
 
 ```cpp
 FiniteAutomaton(const Productions& P, char start_symbol);
 ```
 
-A special final state `"F"` is added.
-
----
-
-### FiniteAutomaton Class
-
-The automaton stores:
-
-- States
-- Alphabet
-- Transitions
-- Initial state
-- Final states
-
-Validation method:
+The resulting automaton provides a validation method:
 
 ```cpp
 bool validate_string(const std::string& input) const;
 ```
 
-Algorithm:
-
-1. Start from initial state.
-2. For each input symbol:
-   - Compute next states using δ.
-3. After processing input:
-   - If at least one current state is final → ACCEPT.
-   - Otherwise → REJECT.
-
-The automaton supports:
-
-- NFA representation
-- Determinism check
-- Subset construction to DFA
-- Conversion back to regular grammar
-
-Only validation is required for Lab 1, but the structure supports later labs.
+Its task is to consume the input symbol by symbol, follow the transitions defined by the grammar-derived automaton, and decide whether the final configuration is accepting.
 
 ---
 
-## EXECUTION (LAB 1)
+## EXECUTION
 
-Client function:
+The laboratory driver creates the grammar, generates several sample strings, converts the grammar into a finite automaton, and validates each generated string. It also tests one intentionally invalid word in order to confirm that the recognizer rejects strings outside the language.
 
 ```cpp
 void solve_lab1() {
@@ -212,32 +113,22 @@ void solve_lab1() {
 
 ## RESULTS
 
-Example output:
-```
-Generated the following strings :
-------------------------
-cd
-aadeefe
-badefjd
-ade
-e
+The program generates strings such as `cd`, `aadeefe`, `badefjd`, `ade`, and `e`, and then checks each of them with the automaton. All generated examples are accepted, which confirms that the automaton correctly recognizes strings produced by the grammar. The additional test string `abcdefgabcdefggg` is rejected, which shows that the implementation also distinguishes invalid inputs.
 
-
-Validating the strings: 
-------------------------
-cd YES
-aadeefe YES
-badefjd YES
-ade YES
-e YES
-abcdefgabcdefggg NO
-```
-
-Generated strings are accepted by the automaton.
-
-Invalid test strings are correctly rejected.
+The experiment therefore validates both sides of the equivalence. The grammar acts as a producer of words, while the finite automaton acts as a recognizer for the same language.
 
 ---
+
+## CONCLUSION
+
+This laboratory work demonstrates the practical equivalence between regular grammars and finite automata. The grammar was represented explicitly, used to generate valid strings, and then transformed into a finite automaton capable of recognizing those strings. The result satisfies the objectives of the task and also provides a solid foundation for the later laboratories developed in the same repository.
+
+---
+
+## REFERENCES
+
+[1] https://en.wikipedia.org/wiki/Formal_grammar
+[2] https://en.wikipedia.org/wiki/Finite-state_machine
 
 ## CONCLUSION
 
